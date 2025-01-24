@@ -3,9 +3,16 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Timer, Trophy, RefreshCw, Play } from "lucide-react";
 import { toast } from "sonner";
-import { countries, type Country } from "@/data/countries";
+import { countries, type Country, regions } from "@/data/countries";
 import { useScoreboard } from "@/hooks/useScoreboard";
 import { Scoreboard } from "@/components/Scoreboard";
 
@@ -15,11 +22,18 @@ export function CountryQuiz() {
   const [timer, setTimer] = useState(0);
   const [isGameComplete, setIsGameComplete] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<string | "all">("all");
   const inputRef = useRef<HTMLInputElement>(null);
   const { scores, addScore, clearScores } = useScoreboard();
 
+  // Filter countries based on selected region
+  const gameCountries =
+    selectedRegion === "all"
+      ? countries
+      : countries.filter((country) => country.region === selectedRegion);
+
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isGameStarted && !isGameComplete) {
       interval = setInterval(() => {
         setTimer((prev) => prev + 1);
@@ -37,7 +51,7 @@ export function CountryQuiz() {
   const checkGuess = (input: string) => {
     const guess = input.trim().toLowerCase();
 
-    const matchedCountry = countries.find(
+    const matchedCountry = gameCountries.find(
       (country) => country.name.toLowerCase() === guess
     );
 
@@ -48,18 +62,20 @@ export function CountryQuiz() {
       setGuessedCountries((prev) => [...prev, matchedCountry]);
       setInput("");
 
-      if (guessedCountries.length + 1 === countries.length) {
+      if (guessedCountries.length + 1 === gameCountries.length) {
         setIsGameComplete(true);
         const newScore = {
           time: timer,
-          correctGuesses: countries.length,
-          totalCountries: countries.length,
+          correctGuesses: gameCountries.length,
+          totalCountries: gameCountries.length,
+          region: selectedRegion,
+          timestamp: Date.now(),
         };
         addScore(newScore);
         toast.success("Congratulations! 🎉", {
-          description: `You've named all ${
-            countries.length
-          } countries in ${formatTime(timer)}!`,
+          description: `You've named all ${gameCountries.length} ${
+            selectedRegion === "all" ? "" : selectedRegion + " "
+          }countries in ${formatTime(timer)}!`,
         });
       }
       return true;
@@ -86,45 +102,72 @@ export function CountryQuiz() {
     setIsGameStarted(false);
   };
 
-  const progress = (guessedCountries.length / countries.length) * 100;
+  const progress = (guessedCountries.length / gameCountries.length) * 100;
 
   if (!isGameStarted) {
     return (
       <div className="w-full p-6 flex flex-col items-center justify-center space-y-6">
         <h1 className="text-4xl font-bold text-center">Country Quiz</h1>
         <p className="text-lg text-muted-foreground text-center max-w-md">
-          Test your knowledge! Can you name all {countries.length} countries in
-          the world?
+          Test your knowledge! Can you name all {gameCountries.length} countries
+          {selectedRegion !== "all" ? ` in ${selectedRegion}` : " in the world"}
+          ?
         </p>
+
+        <div className="flex flex-col items-center gap-4">
+          <Select
+            value={selectedRegion}
+            onValueChange={(value) => setSelectedRegion(value)}
+          >
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Select a region" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
+              {regions.map((region) => (
+                <SelectItem key={region} value={region}>
+                  {region}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button size="lg" onClick={startGame}>
+            <Play className="mr-2 h-5 w-5" />
+            Start Game
+          </Button>
+        </div>
+
         <Scoreboard scores={scores} onClear={clearScores} />
-        <Button size="lg" onClick={startGame}>
-          <Play className="mr-2 h-5 w-5" />
-          Start Game
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="w-full max-w-4xl p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Country Quiz</h1>
-        <div className="flex items-center gap-2">
-          <Timer className="h-5 w-5" />
-          <span className="font-mono text-lg">{formatTime(timer)}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            {selectedRegion === "all" ? "World" : selectedRegion}
+          </span>
+          <div className="flex items-center gap-2">
+            <Timer className="h-5 w-5" />
+            <span className="font-mono text-lg">{formatTime(timer)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="space-y-4">
         <div className="flex items-center gap-4">
           <Progress
             value={progress}
             className="flex-1 h-3"
-            indicatorClass="bg-gradient-to-r from-primary to-green-500"
+            indicatorClass="bg-gradient-to-r from-green-500 to-emerald-500"
           />
           <span className="text-sm font-medium">
-            {guessedCountries.length}/{countries.length} ({Math.round(progress)}
-            %)
+            {guessedCountries.length}/{gameCountries.length} (
+            {Math.round(progress)}%)
           </span>
         </div>
 
@@ -159,14 +202,42 @@ export function CountryQuiz() {
                   .map((country) => (
                     <div
                       key={country.code}
-                      className="p-2 bg-muted rounded-md text-sm"
+                      className="flex items-center gap-2 p-2 bg-muted rounded-md text-sm"
                     >
-                      {country.name}
+                      <img
+                        src={country.flag}
+                        alt={`${country.name} flag`}
+                        className="w-6 h-4 object-cover rounded"
+                      />
+                      <span className="truncate">{country.name}</span>
                     </div>
                   ))}
               </div>
             )}
           </ScrollArea>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-card rounded-lg p-4">
+            <h2 className="text-lg font-semibold mb-2">Statistics</h2>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Region:</span>
+                <span>
+                  {selectedRegion === "all" ? "World" : selectedRegion}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total Countries:</span>
+                <span>{gameCountries.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Remaining:</span>
+                <span>{gameCountries.length - guessedCountries.length}</span>
+              </div>
+            </div>
+          </div>
+          <Scoreboard scores={scores} onClear={clearScores} />
         </div>
       </div>
 
