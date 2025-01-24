@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { countries, type Country, regions } from "@/data/countries";
 import { useScoreboard } from "@/hooks/useScoreboard";
 import { Scoreboard } from "@/components/Scoreboard";
+import { WorldMap } from "@/components/WorldMap";
 
 export function CountryQuiz() {
   const [guessedCountries, setGuessedCountries] = useState<Country[]>([]);
@@ -144,7 +145,7 @@ export function CountryQuiz() {
   }
 
   return (
-    <div className="w-full max-w-4xl p-6 space-y-6">
+    <div className="w-full p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Country Quiz</h1>
         <div className="flex items-center gap-4">
@@ -157,6 +158,11 @@ export function CountryQuiz() {
           </div>
         </div>
       </div>
+
+      <WorldMap
+        guessedCountries={guessedCountries}
+        className="border shadow-sm"
+      />
 
       <div className="space-y-4">
         <div className="flex items-center gap-4">
@@ -187,7 +193,7 @@ export function CountryQuiz() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col gap-4">
         <div className="bg-card rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-2">Guessed Countries</h2>
           <ScrollArea className="h-[300px] rounded-md border p-4">
@@ -215,29 +221,6 @@ export function CountryQuiz() {
               </div>
             )}
           </ScrollArea>
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-card rounded-lg p-4">
-            <h2 className="text-lg font-semibold mb-2">Statistics</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Region:</span>
-                <span>
-                  {selectedRegion === "all" ? "World" : selectedRegion}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Countries:</span>
-                <span>{gameCountries.length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Remaining:</span>
-                <span>{gameCountries.length - guessedCountries.length}</span>
-              </div>
-            </div>
-          </div>
-          <Scoreboard scores={scores} onClear={clearScores} />
         </div>
       </div>
 

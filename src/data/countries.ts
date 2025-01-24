@@ -11,6 +11,7 @@ interface RawCountry {
   capital?: string[];
   region: string;
   population: number;
+  latlng: number[];
 }
 
 export interface Country {
@@ -20,10 +21,11 @@ export interface Country {
   capital?: string;
   region: string;
   population: number;
+  latlng: [number, number];
 }
 
 // Process the raw data into a simpler format
-export const countries: Country[] = (rawCountries as RawCountry[])
+export const countries: Country[] = (rawCountries as unknown as RawCountry[])
   .map((country) => ({
     name: country.name.common,
     code: country.cca3,
@@ -31,6 +33,7 @@ export const countries: Country[] = (rawCountries as RawCountry[])
     capital: country.capital?.[0],
     region: country.region,
     population: country.population,
+    latlng: [country.latlng[0], country.latlng[1]] as [number, number],
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
