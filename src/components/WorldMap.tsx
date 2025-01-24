@@ -1,5 +1,6 @@
 import { type Country } from "@/data/countries";
 import { cn } from "@/lib/utils";
+import worldMapSvg from "@/data/world-map.svg?raw";
 
 interface WorldMapProps {
   guessedCountries: Country[];
@@ -15,7 +16,7 @@ export function WorldMap({ guessedCountries, className }: WorldMapProps) {
       )}
     >
       <svg
-        viewBox="0 0 2000 1000"
+        viewBox="0 0 2000 857"
         className="w-full h-full"
         style={{ background: "var(--background)" }}
       >
@@ -39,13 +40,20 @@ export function WorldMap({ guessedCountries, className }: WorldMapProps) {
         {/* Grid background */}
         <rect width="100%" height="100%" fill="url(#grid)" />
 
-        {/* Countries */}
+        {/* World Map Background */}
+        <g
+          className="fill-muted-foreground/20 stroke-muted-foreground/30"
+          strokeWidth="1"
+          dangerouslySetInnerHTML={{ __html: worldMapSvg }}
+        />
+
+        {/* Guessed Countries Overlay */}
         {guessedCountries.map((country) => {
           const [lat, lng] = country.latlng;
 
-          // Convert lat/lng to SVG coordinates
-          const x = (lng + 180) * (2000 / 360);
-          const y = (90 - lat) * (1000 / 180);
+          // Convert lat/lng to SVG coordinates with adjustments
+          const x = ((lng + 180) / 360) * 2000 - 25; // Shift east by 20 units
+          const y = ((90 - lat) / 180) * 857 - 10; // Shift south by 10 units
 
           return (
             <g key={country.code} transform={`translate(${x}, ${y})`}>
