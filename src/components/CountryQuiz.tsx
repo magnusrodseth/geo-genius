@@ -21,6 +21,7 @@ export function CountryQuiz() {
   const [guessedCountries, setGuessedCountries] = useState<Country[]>([]);
   const [input, setInput] = useState("");
   const [timer, setTimer] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGameComplete, setIsGameComplete] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<string | "all">("all");
@@ -51,15 +52,18 @@ export function CountryQuiz() {
 
   const checkGuess = (input: string) => {
     const guess = input.trim().toLowerCase();
+    setErrorMessage(null);
 
     const matchedCountry = gameCountries.find(
       (country) => country.name.toLowerCase() === guess
     );
 
-    if (
-      matchedCountry &&
-      !guessedCountries.some((c) => c.code === matchedCountry.code)
-    ) {
+    if (matchedCountry) {
+      if (guessedCountries.some((c) => c.code === matchedCountry.code)) {
+        setErrorMessage(`You've already guessed ${matchedCountry.name}!`);
+        return false;
+      }
+
       setGuessedCountries((prev) => [...prev, matchedCountry]);
       setInput("");
 
@@ -99,6 +103,7 @@ export function CountryQuiz() {
     setGuessedCountries([]);
     setInput("");
     setTimer(0);
+    setErrorMessage(null);
     setIsGameComplete(false);
     setIsGameStarted(false);
   };
@@ -191,6 +196,9 @@ export function CountryQuiz() {
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
+        {errorMessage && (
+          <p className="text-sm text-destructive mt-2">{errorMessage}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-4">
@@ -202,7 +210,7 @@ export function CountryQuiz() {
                 No countries guessed yet. Start typing to play!
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 md:rogrid-cols-4 gap-2">
                 {guessedCountries
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((country) => (

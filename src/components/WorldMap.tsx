@@ -1,6 +1,15 @@
 import { type Country } from "@/data/countries";
 import { cn } from "@/lib/utils";
-import worldMapSvg from "@/data/world-map.svg?raw";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+  type GeographyProps,
+} from "react-simple-maps";
+
+// World map TopoJSON source
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
 
 interface WorldMapProps {
   guessedCountries: Country[];
@@ -11,62 +20,79 @@ export function WorldMap({ guessedCountries, className }: WorldMapProps) {
   return (
     <div
       className={cn(
-        "relative w-3/4 mx-auto aspect-[2/1] bg-muted rounded-lg overflow-hidden",
+        "relative w-full mx-auto aspect-[2/1] bg-muted rounded-lg overflow-hidden",
         className
       )}
     >
-      <svg
-        viewBox="0 0 2000 857"
-        className="w-full h-full"
-        style={{ background: "var(--background)" }}
+      <ComposableMap
+        width={930}
+        height={500}
+        projection="geoMercator"
+        projectionConfig={{
+          scale: 100,
+          center: [0, 40],
+        }}
       >
-        <defs>
-          <pattern
-            id="grid"
-            width="20"
-            height="20"
-            patternUnits="userSpaceOnUse"
-            className="text-muted-foreground/20"
-          >
-            <path
-              d="M 20 0 L 0 0 0 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="0.5"
-            />
-          </pattern>
-        </defs>
+        <Geographies geography={geoUrl}>
+          {({
+            geographies,
+          }: {
+            geographies: Array<GeographyProps["geography"]>;
+          }) =>
+            geographies.map((geo) => (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                tabIndex={-1}
+                style={{
+                  default: {
+                    fill: "var(--muted-foreground)",
+                    fillOpacity: 0.2,
+                    stroke: "var(--muted-foreground)",
+                    strokeWidth: 0.3,
+                    strokeOpacity: 1,
+                    outline: "none",
+                  },
+                  hover: {
+                    fill: "var(--muted-foreground)",
+                    fillOpacity: 0.3,
+                    stroke: "var(--muted-foreground)",
+                    strokeWidth: 0.3,
+                    strokeOpacity: 1,
+                    outline: "none",
+                  },
+                  pressed: {
+                    fill: "var(--muted-foreground)",
+                    fillOpacity: 0.4,
+                    stroke: "var(--muted-foreground)",
+                    strokeWidth: 0.3,
+                    strokeOpacity: 1,
+                    outline: "none",
+                  },
+                }}
+              />
+            ))
+          }
+        </Geographies>
 
-        {/* Grid background */}
-        <rect width="100%" height="100%" fill="url(#grid)" />
-
-        {/* World Map Background */}
-        <g
-          className="fill-muted-foreground/20 stroke-muted-foreground/30"
-          strokeWidth="1"
-          dangerouslySetInnerHTML={{ __html: worldMapSvg }}
-        />
-
-        {/* Guessed Countries Overlay */}
+        {/* Guessed Countries Markers */}
         {guessedCountries.map((country) => {
           const [lat, lng] = country.latlng;
 
-          // Convert lat/lng to SVG coordinates with adjustments
-          const x = ((lng + 180) / 360) * 2000 - 25; // Shift east by 20 units
-          const y = ((90 - lat) / 180) * 857 - 10; // Shift south by 10 units
-
           return (
-            <g key={country.code} transform={`translate(${x}, ${y})`}>
-              <circle
-                r="5"
-                className="fill-primary animate-ping"
-                style={{ animationDuration: "2s" }}
-              />
-              <circle r="3" className="fill-primary" />
-            </g>
+            <Marker key={country.code} coordinates={[lng, lat]}>
+              <g>
+                <circle
+                  r="1.5"
+                  className="fill-primary animate-ping"
+                  style={{ animationDuration: "2s" }}
+                />
+                <circle r="1" className="fill-primary" />
+              </g>
+            </Marker>
           );
         })}
-      </svg>
+      </ComposableMap>
     </div>
   );
 }

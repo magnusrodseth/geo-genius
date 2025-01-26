@@ -12,6 +12,8 @@ interface RawCountry {
   region: string;
   population: number;
   latlng: number[];
+  independent: boolean;
+  unMember: boolean;
 }
 
 export interface Country {
@@ -26,6 +28,15 @@ export interface Country {
 
 // Process the raw data into a simpler format
 export const countries: Country[] = (rawCountries as unknown as RawCountry[])
+  .filter((country) => {
+    // Include all UN members, both observer states, and fix Guinea-Bissau's status
+    const shouldInclude =
+      country.unMember ||
+      country.name.common === "Vatican City" ||
+      country.name.common === "Palestine" ||
+      country.name.common === "Guinea-Bissau"; // Fix for incorrect UN member status
+    return shouldInclude;
+  })
   .map((country) => ({
     name: country.name.common,
     code: country.cca3,
